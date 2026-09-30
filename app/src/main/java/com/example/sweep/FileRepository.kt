@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
  * swapped for a fake/test version, without any changes above this layer.
  * This is the "dependency inversion" principle in practice.
  */
-interface `FileRepository.kt` {
+interface FileRepository {
 
     /**
      * Returns a stream of files/folders located inside [folderUri].
@@ -24,5 +24,5 @@ interface `FileRepository.kt` {
      *   work that can take time — a Flow lets results be delivered
      *   asynchronously without blocking the UI thread.
      */
-    fun getFiles(folderUri: Uri? = null): Flow<List<`FileItem.kt`>>
+    fun getFiles(folderUri: Uri? = null): Flow<List<FileItem>>
 }

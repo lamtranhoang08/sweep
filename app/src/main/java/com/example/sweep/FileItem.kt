@@ -19,7 +19,7 @@ import android.net.Uri
  *   rather than a file (open/preview it).
  * @property dateModified Last modified time, in epoch milliseconds.
  */
-data class `FileItem.kt`(
+data class FileItem(
     val name: String,
     val uri: Uri,
     val sizeBytes: Long,
