@@ -134,7 +134,7 @@ A file's folder tells you its role: `data/` never imports Compose, `screens/` ne
 
 ### Setup
 ```bash
-git clone https://github.com/<your-username>/sweep.git
+git clone https://github.com/lamtranhoang08/sweep.git
 cd sweep
 ```
 
