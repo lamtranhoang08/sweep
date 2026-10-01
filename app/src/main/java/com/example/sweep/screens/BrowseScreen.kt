@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.sweep.BrowseViewModel
+import com.example.sweep.screens.BrowseViewModel
 import com.example.sweep.FileRepositoryImpl
 import com.example.sweep.FileSystemDataSource
 import com.example.sweep.MediaStoreDataSource

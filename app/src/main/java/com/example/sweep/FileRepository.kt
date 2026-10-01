@@ -25,4 +25,11 @@ interface FileRepository {
      *   asynchronously without blocking the UI thread.
      */
     fun getFiles(folderUri: Uri? = null): Flow<List<FileItem>>
+
+    /**
+     * Returns total bytes used per StorageCategory, derived from all indexed media.
+     * Used by the Storage screen's breakdown view.
+     */
+    fun getStorageSummary(): Flow<Map<StorageCategory, Long>>
+
 }
