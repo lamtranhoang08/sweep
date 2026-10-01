@@ -2,6 +2,7 @@ package com.example.sweep
 
 import android.net.Uri
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
  * Combines [MediaStoreDataSource] and [FileSystemDataSource] behind the single
@@ -29,6 +30,16 @@ class FileRepositoryImpl(
         } else {
             // A specific folder was picked via SAF — browse its real contents.
             fileSystemDataSource.listFiles(folderUri)
+        }
+    }
+
+    override fun getStorageSummary(): Flow<Map<StorageCategory, Long>> {
+        return mediaStoreDataSource.getAllMedia().map { items ->
+            items.groupBy { it.category }.mapValues { (_, categoryItems) ->
+                categoryItems.sumOf {
+                    it.sizeBytes
+                }
+            }
         }
     }
 }

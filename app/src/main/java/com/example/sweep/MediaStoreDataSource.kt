@@ -25,9 +25,9 @@ class MediaStoreDataSource(private val context: Context) {
      */
     fun getAllMedia(): Flow<List<FileItem>> = flow {
         val items = mutableListOf<FileItem>()
-        items += queryCollection(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        items += queryCollection(MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-        items += queryCollection(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI)
+        items += queryCollection(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, StorageCategory.IMAGE)
+        items += queryCollection(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, StorageCategory.VIDEO)
+        items += queryCollection(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, StorageCategory.AUDIO)
         emit(items)
     }.flowOn(Dispatchers.IO)
 
@@ -35,7 +35,10 @@ class MediaStoreDataSource(private val context: Context) {
      * Runs a single MediaStore query against [collectionUri] and maps
      * each row into a FileItem.
      */
-    private fun queryCollection(collectionUri: Uri): List<FileItem> {
+    private fun queryCollection(
+        collectionUri: Uri,
+        category: StorageCategory
+    ): List<FileItem> {
         val results = mutableListOf<FileItem>()
 
         val projection = arrayOf(
@@ -65,7 +68,8 @@ class MediaStoreDataSource(private val context: Context) {
                     uri = itemUri,
                     sizeBytes = cursor.getLong(sizeCol),
                     isDirectory = false,
-                    dateModified = cursor.getLong(dateCol) * 1000L // MediaStore stores seconds, we use millis
+                    dateModified = cursor.getLong(dateCol) * 1000L, // MediaStore stores seconds, we use millis
+                    category = category
                 )
             }
         }

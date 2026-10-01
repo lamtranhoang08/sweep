@@ -18,11 +18,14 @@ import android.net.Uri
  * @property isDirectory True if this item is a folder (navigate into it)
  *   rather than a file (open/preview it).
  * @property dateModified Last modified time, in epoch milliseconds.
+ * @property category Broad category this file belongs to, used for grouping storage totals on the Storage screen. Defaults to
+ * OTHER for files that come from general folder browsing rather than Meidastore
  */
 data class FileItem(
     val name: String,
     val uri: Uri,
     val sizeBytes: Long,
     val isDirectory: Boolean,
-    val dateModified: Long
+    val dateModified: Long,
+    val category: StorageCategory = StorageCategory.OTHER
 )

@@ -1,9 +1,11 @@
-package com.example.sweep
+package com.example.sweep.screens
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.sweep.FileItem
+import com.example.sweep.FileRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,9 +14,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * Holds UI state for the Browse screen and coordinates with [FileRepository].
+ * Holds UI state for the Browse screen and coordinates with [com.example.sweep.FileRepository].
  *
- * The View ([BrowseScreen]) never touches [FileRepository] directly—it only
+ * The View ([BrowseScreen]) never touches [com.example.sweep.FileRepository] directly—it only
  * observes [files] and calls [openFolder]. This ViewModel mediates between
  * the UI and the data layer while surviving configuration changes like screen rotations.
  */
@@ -36,7 +38,7 @@ class BrowseViewModel(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+            started = SharingStarted.Companion.WhileSubscribed(STOP_TIMEOUT_MILLIS),
             initialValue = emptyList()
         )
 
