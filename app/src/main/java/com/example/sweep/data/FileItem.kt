@@ -1,4 +1,4 @@
-package com.example.sweep
+package com.example.sweep.data
 
 import android.net.Uri
 
