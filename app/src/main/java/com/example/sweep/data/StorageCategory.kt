@@ -1,4 +1,4 @@
-package com.example.sweep
+package com.example.sweep.data
 
 /**
  * Broad category a file belongs to, used for grouping storage totals

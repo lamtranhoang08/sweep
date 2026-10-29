@@ -3,8 +3,8 @@ package com.example.sweep.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.sweep.FileRepository
-import com.example.sweep.StorageCategory
+import com.example.sweep.data.FileRepository
+import com.example.sweep.data.StorageCategory
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.stateIn
  * Holds UI state for the Storage screen—total bytes used per category.
  *
  * This screen is read-only (no navigation or user-triggered actions beyond viewing),
- * so the ViewModel serves as a reactive pass-through from [com.example.sweep.FileRepository] to the UI,
+ * so the ViewModel serves as a reactive pass-through from [FileRepository] to the UI,
  * converted into a [kotlinx.coroutines.flow.StateFlow] that Compose can observe safely across lifecycle changes. */
 class StorageViewModel(
     repository: FileRepository
