@@ -1,5 +1,6 @@
 package com.example.sweep
 
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Folder
@@ -15,3 +16,16 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
 }
 
 val bottomNavItems = listOf(Screen.Browse, Screen.Gallery, Screen.Storage, Screen.Cleanup)
+
+/**
+ * Route for the full-screen media viewer. It isn't a bottom-nav tab, so it lives outside the [Screen] sealed class
+ *
+ * A content:// uri contains slahses and colons, which would break the route path,
+ * so [create] URL_encodes it. Navigation decodes it again automatically when the argument is read.
+ */
+object MediaViewerRoute {
+    const val ARG_URI = "uri"
+    const val ROUTE = "viewer/{$ARG_URI}"
+
+    fun create(uri: Uri): String = "viewer/${Uri.encode(uri.toString())}"
+}

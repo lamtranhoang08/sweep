@@ -55,6 +55,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
+    // Coil Dependencies
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("io.coil-kt:coil-video:2.6.0")
+    implementation("io.coil-kt:coil-gif:2.6.0")
+
     // Unit & UI Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
