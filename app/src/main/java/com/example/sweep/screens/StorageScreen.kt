@@ -32,6 +32,7 @@ import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
 import com.example.sweep.data.StorageCategory
+import com.example.sweep.util.formatBytes
 import java.lang.String.format
 import java.util.Locale
 
@@ -170,24 +171,4 @@ private fun getCategoryColor(category: StorageCategory): Color {
         StorageCategory.AUDIO -> Color(0xFFFF9800) // Orange
         StorageCategory.OTHER -> Color(0xFF9C27B0) // Purple
     }
-}
-
-/**
- * Converts a raw byte count into a formatted human-readable string (e.g. "2.3 MB").
- */
-// TODO: formatBytes() will likely be needed again once Browse/Gallery show
-//  file sizes too. Extract this into a shared util file (e.g. FormatUtils.kt)
-//  instead of duplicating it per screen.
-private fun formatBytes(bytes: Long): String {
-    if (bytes <= 0) return "0 B"
-    val units = arrayOf("B", "KB", "MB", "GB", "TB")
-    var value = bytes.toDouble()
-    var unitIndex = 0
-
-    while (value >= 1024 && unitIndex < units.size - 1) {
-        value /= 1024.0
-        unitIndex++
-    }
-
-    return format(Locale.getDefault(), "%.2f %s", value, units[unitIndex])
 }

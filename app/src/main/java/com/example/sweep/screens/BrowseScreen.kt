@@ -37,6 +37,7 @@ import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
 import com.example.sweep.data.FileHasher
+import com.example.sweep.util.formatBytes
 
 /**
  * Interactive directory browser screen displaying files and subdirectories
@@ -46,6 +47,9 @@ import com.example.sweep.data.FileHasher
  */
 @Composable
 fun BrowseScreen(
+    // TODO: Same repository duplication as the other screens, and it's rebuilt on
+    // every recomposition here (default-parameter expression). Replace with a
+    // shared AppContainer.
     viewModel: BrowseViewModel = viewModel(
         factory = BrowseViewModel.Factory(
             FileRepositoryImpl(
@@ -106,7 +110,7 @@ fun BrowseScreen(
                         headlineContent = { Text(text = file.name) },
                         supportingContent = {
                             if (!file.isDirectory) {
-                                Text(text = "${file.sizeBytes / 1024} KB")
+                                Text(text = formatBytes(file.sizeBytes))
                             }
                         },
                         leadingContent = {
