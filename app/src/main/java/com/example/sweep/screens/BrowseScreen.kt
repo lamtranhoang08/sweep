@@ -2,6 +2,7 @@ package com.example.sweep.screens
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -35,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
+import com.example.sweep.data.FileHasher
 
 /**
  * Interactive directory browser screen displaying files and subdirectories
@@ -52,7 +54,8 @@ fun BrowseScreen(
                 ),
                 fileSystemDataSource = FileSystemDataSource(
                     LocalContext.current.applicationContext
-                )
+                ),
+                fileHasher = FileHasher(LocalContext.current.applicationContext)
             )
         )
     )
@@ -117,15 +120,7 @@ fun BrowseScreen(
                             if (file.isDirectory) {
                                 viewModel.openFolder(file.uri)
                             } else {
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(file.uri, context.contentResolver.getType(file.uri))
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                try {
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    // Handle cases where no activity can handle the intent
-                                }
+                               openFileIntent(context, file.uri)
                             }
                         }
                     )

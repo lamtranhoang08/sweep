@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sweep.data.FileHasher
 import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
@@ -46,7 +47,8 @@ fun StorageScreen(
                 mediaStoreDataSource = MediaStoreDataSource(
                     LocalContext.current.applicationContext
                 ),
-                fileSystemDataSource = FileSystemDataSource(LocalContext.current.applicationContext)
+                fileSystemDataSource = FileSystemDataSource(LocalContext.current.applicationContext),
+                fileHasher = FileHasher(LocalContext.current.applicationContext)
             )
         )
     )

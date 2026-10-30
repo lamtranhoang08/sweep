@@ -32,4 +32,16 @@ interface FileRepository {
      */
     fun getStorageSummary(): Flow<Map<StorageCategory, Long>>
 
+    /**
+     * Returns the largest indexed media file. Used by the Cleanup screen's
+     * @param limit Maximum number of files to return
+     */
+    fun getLargeFiles(limit: Int = 50): Flow<List<FileItem>>
+
+    /**
+     * Returns groups of indexed media files with identical content,
+     * the group with the most reclaimable space first.
+     * This can take a while on large library because candidate files must be hashed.
+     */
+    fun getDuplicateGroups(): Flow<List<DuplicateGroup>>
 }
