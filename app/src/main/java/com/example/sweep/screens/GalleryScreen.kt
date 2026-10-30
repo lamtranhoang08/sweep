@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ComposeCompilerApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.VideoFrameDecoder
+import com.example.sweep.data.FileHasher
 import com.example.sweep.data.FileItem
 import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
@@ -51,7 +51,8 @@ fun GalleryScreen(
     val repository = remember {
         FileRepositoryImpl(
             mediaStoreDataSource = MediaStoreDataSource(context.applicationContext),
-            fileSystemDataSource = FileSystemDataSource(context.applicationContext)
+            fileSystemDataSource = FileSystemDataSource(context.applicationContext),
+            fileHasher = FileHasher(context.applicationContext)
         )
     }
 
