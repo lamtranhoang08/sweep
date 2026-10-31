@@ -45,6 +45,8 @@ import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
 import com.example.sweep.data.StorageCategory
+import com.example.sweep.screens.components.FileActionsSheet
+import com.example.sweep.screens.components.MediaRow
 import com.example.sweep.util.formatBytes
 
 /**
@@ -77,6 +79,7 @@ fun CleanupScreen() {
     }
 
     var selectedTab by rememberSaveable { mutableStateOf(0) }
+    var selectedFile by remember { mutableStateOf<FileItem?>(null) }
     val tabTitles = listOf("Large files", "Duplicates")
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -94,14 +97,24 @@ fun CleanupScreen() {
         // That keeps the expensive duplicate scan from starting until the
         // user actually opens the Duplicates tab.
         when (selectedTab) {
-            0 -> LargeFilesTab(viewModel, imageLoader)
-            else -> DuplicatesTab(viewModel, imageLoader)
+            0 -> LargeFilesTab(viewModel, imageLoader) { selectedFile = it }
+            else -> DuplicatesTab(viewModel, imageLoader) { selectedFile = it }
         }
+    }
+
+    selectedFile?.let { file ->
+        FileActionsSheet(
+            file = file,
+            onDismiss = { selectedFile = null },
+            onShare = { /* TODO */ },
+            onRename = { /* TODO */ },
+            onDelete = { /* TODO */ }
+        )
     }
 }
 
 @Composable
-private fun LargeFilesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader) {
+private fun LargeFilesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader, onFileClick: (FileItem) -> Unit) {
     val state by viewModel.largeFiles.collectAsStateWithLifecycle()
 
     when (val current = state) {
@@ -113,7 +126,7 @@ private fun LargeFilesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader)
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(current.data, key = { it.uri.toString() }) { file ->
-                        MediaRow(file, imageLoader)
+                        MediaRow(file, imageLoader, onClick = { onFileClick(file) })
                     }
                 }
             }
@@ -122,7 +135,7 @@ private fun LargeFilesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader)
 }
 
 @Composable
-private fun DuplicatesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader) {
+private fun DuplicatesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader, onFileClick: (FileItem) -> Unit) {
     val state by viewModel.duplicateGroups.collectAsStateWithLifecycle()
 
     when (val current = state) {
@@ -149,7 +162,7 @@ private fun DuplicatesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader)
                             GroupHeader(group)
                         }
                         items(group.files, key = { "${group.hash}-${it.uri}" }) { file ->
-                            MediaRow(file, imageLoader)
+                            MediaRow(file, imageLoader, onClick = { onFileClick(file) })
                         }
                     }
                 }
@@ -168,42 +181,6 @@ private fun GroupHeader(group: DuplicateGroup) {
             text = "${group.files.size} copies · ${formatBytes(group.reclaimableBytes)} reclaimable",
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-    }
-}
-
-// TODO: Move MediaRow into screens/components so Search and the file actions
-//  can reuse it.
-@Composable
-private fun MediaRow(file: FileItem, imageLoader: ImageLoader) {
-    Column {
-        ListItem(
-            headlineContent = { Text(file.name, maxLines = 1) },
-            supportingContent = { Text(formatBytes(file.sizeBytes)) },
-            leadingContent = { Thumbnail(file, imageLoader) }
-        )
-        HorizontalDivider()
-    }
-}
-
-@Composable
-private fun Thumbnail(file: FileItem, imageLoader: ImageLoader) {
-    if (file.category == StorageCategory.AUDIO) {
-        // Audio files have no visual to decode, so show an icon instead.
-        Icon(
-            imageVector = Icons.Default.AudioFile,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp)
-        )
-    } else {
-        AsyncImage(
-            model = file.uri,
-            imageLoader = imageLoader,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(RoundedCornerShape(6.dp))
         )
     }
 }
