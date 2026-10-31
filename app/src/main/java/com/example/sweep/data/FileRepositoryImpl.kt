@@ -7,6 +7,8 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 /**
  * Combines [MediaStoreDataSource] and [FileSystemDataSource] behind the single
@@ -60,9 +62,11 @@ class FileRepositoryImpl(
     // flowOn goes AFTER map on purpose: operators placed after an upstream
     // flowOn run on the collector's thread (the main thread, for a
     // ViewModel), so without it the hashing would block the UI.
+    // mapLatest cancels an in-flight scan when MediaStore changes again.
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getDuplicateGroups(): Flow<List<DuplicateGroup>> {
         return mediaStoreDataSource.getAllMedia()
-            .map { items -> findDuplicates(items) }
+            .mapLatest { items -> findDuplicates(items) }
             .flowOn(Dispatchers.IO)
     }
 

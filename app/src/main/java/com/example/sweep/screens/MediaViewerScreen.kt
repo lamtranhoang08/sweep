@@ -38,6 +38,8 @@ import coil.compose.AsyncImage
 // TODO: Pinch-to-zoom and double-tap-to-zoom for images.
 // TODO: Replace VideoView with Media3 ExoPlayer for better format support,
 //  fullscreen controls, and lifecycle handling (pause when app is backgrounded).
+// TODO: No file actions (share/delete) from the full-screen viewer yet; reuse
+//  FileActionsHost here.
 @Composable
 fun MediaViewerScreen(
     uri: Uri,

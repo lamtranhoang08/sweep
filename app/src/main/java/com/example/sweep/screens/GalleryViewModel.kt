@@ -23,8 +23,9 @@ import kotlinx.coroutines.flow.stateIn
 class GalleryViewModel(
     repository: FileRepository
 ) : ViewModel() {
-    // TODO: The list loads once per subscription and doesn't react to new media
-    // being added. Register a ContentObserver on MediaStore for live updates.
+    // TODO: initialValue is emptyList(), so the screen can briefly flash
+    //  "No media found" while loading. Wrap in LoadState (like Cleanup) to
+    //  tell "loading" apart from "empty".
     val mediaItems: StateFlow<List<FileItem>> =
         repository.getFiles()
             .map { items ->
