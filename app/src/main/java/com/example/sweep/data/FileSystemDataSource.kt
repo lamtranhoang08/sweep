@@ -25,6 +25,8 @@ class FileSystemDataSource(
      * @param folderUri A tree [Uri] the app already holds persistent access permissions for.
      * @return A [Flow] emitting the list of [FileItem] metadata mapped from SAF.
      */
+    // TODO: SAF folder listings are stil one-shot, so Browse won't refresh if files change outside the app.
+    // Observe the document tree for changes.
     fun listFiles(folderUri: Uri): Flow<List<FileItem>> = flow {
         val rootDoc = DocumentFile.fromTreeUri(context, folderUri)
         val files = rootDoc?.listFiles()?.map { doc ->

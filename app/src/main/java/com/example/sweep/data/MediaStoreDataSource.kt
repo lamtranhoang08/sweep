@@ -2,12 +2,19 @@ package com.example.sweep.data
 
 import android.content.ContentUris
 import android.content.Context
+import android.database.ContentObserver
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 
 /**
  * Reads media files (images, videos, audio) using Android's MediaStore API.
@@ -19,17 +26,29 @@ import kotlinx.coroutines.flow.flowOn
 class MediaStoreDataSource(private val context: Context) {
 
     /**
-     * Queries all images, videos, and audio the app can see, combined into
-     * a single list of FileItems. Runs on Dispatchers.IO since this is
-     * disk/database work and must never block the UI thread.
+     * Streams all images, video, and audio the app can see, each tagged
+     * with its [StorageCategory]. Emits once on collection,
+     * then again every time MediaStorage reports a change, so the UI can
+     * update.
      */
-    fun getAllMedia(): Flow<List<FileItem>> = flow {
-        val items = mutableListOf<FileItem>()
-        items += queryCollection(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, StorageCategory.IMAGE)
-        items += queryCollection(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, StorageCategory.VIDEO)
-        items += queryCollection(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, StorageCategory.AUDIO)
-        emit(items)
-    }.flowOn(Dispatchers.IO)
+    fun getAllMedia(): Flow<List<FileItem>> = mediaChanges().conflate().map { loadAllMedia() }.flowOn(Dispatchers.IO)
+
+    private fun mediaChanges(): Flow<Unit> = callbackFlow {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                trySend(Unit)
+            }
+        }
+
+        val resolver = context.contentResolver
+        COLLECTIONS.forEach { (uri, _) ->
+            resolver.registerContentObserver(uri, true, observer)
+        }
+        trySend(Unit)
+        awaitClose { resolver.unregisterContentObserver(observer) }
+    }
+
+    private fun loadAllMedia(): List<FileItem> = COLLECTIONS.flatMap { (uri, category) -> queryCollection(uri, category) }
 
     /**
      * Runs a single MediaStore query against [collectionUri] and maps
@@ -75,5 +94,14 @@ class MediaStoreDataSource(private val context: Context) {
         }
 
         return results
+    }
+
+    private companion object {
+        /** Every collection we read, paired with the category its files get. */
+        val COLLECTIONS = listOf(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI to StorageCategory.IMAGE,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI to StorageCategory.VIDEO,
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI to StorageCategory.AUDIO
+        )
     }
 }
