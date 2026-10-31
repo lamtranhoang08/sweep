@@ -1,6 +1,8 @@
 package com.example.sweep.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
@@ -11,11 +13,14 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,6 +38,7 @@ import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
 import com.example.sweep.data.StorageCategory
+import com.example.sweep.screens.components.FileActionsHost
 
 /**
  * Grid of image and video thumbnails.
@@ -43,7 +49,7 @@ import com.example.sweep.data.StorageCategory
 @Composable
 fun GalleryScreen(
     onItemClick: (FileItem) -> Unit = {}
-)  {
+) {
     val context = LocalContext.current
 
     // TODO: Same duplication as StorageScreen/BrowseScreen: each screen builds
@@ -61,6 +67,7 @@ fun GalleryScreen(
     )
 
     val items by viewModel.mediaItems.collectAsStateWithLifecycle()
+    var selectedFile by remember { mutableStateOf<FileItem?>(null) }
 
     // Coil can't draw a frame from a video file out of the box. This loader
     // adds the video decoder (from the coil-video dependency) so video items get a thumbnail too
@@ -83,24 +90,28 @@ fun GalleryScreen(
                 MediaThumbnail(
                     item = item,
                     imageLoader = imageLoader,
-                    onClick = { onItemClick(item) }
+                    onClick = { onItemClick(item) },
+                    onLongClick = { selectedFile = item }
                 )
             }
         }
     }
+    FileActionsHost(file = selectedFile, onDismiss = { selectedFile = null })
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun MediaThumbnail(
     item: FileItem,
     imageLoader: ImageLoader,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .padding(2.dp)
             .aspectRatio(1f)
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
     ) {
         AsyncImage(
             model = item.uri,

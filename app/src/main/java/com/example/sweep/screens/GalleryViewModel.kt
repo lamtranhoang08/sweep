@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.stateIn
 class GalleryViewModel(
     repository: FileRepository
 ) : ViewModel() {
+    // TODO: initialValue is emptyList(), so the screen can briefly flash
+    //  "No media found" while loading. Wrap in LoadState (like Cleanup) to
+    //  tell "loading" apart from "empty".
     val mediaItems: StateFlow<List<FileItem>> =
         repository.getFiles()
             .map { items ->

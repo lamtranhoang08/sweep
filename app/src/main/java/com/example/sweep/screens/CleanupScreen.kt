@@ -50,6 +50,7 @@ import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
 import com.example.sweep.data.StorageCategory
+import com.example.sweep.screens.components.FileActionsHost
 import com.example.sweep.screens.components.FileActionsSheet
 import com.example.sweep.screens.components.MediaRow
 import com.example.sweep.util.formatBytes
@@ -87,16 +88,6 @@ fun CleanupScreen() {
 
     var selectedTab by rememberSaveable { mutableStateOf(0) }
     var selectedFile by remember { mutableStateOf<FileItem?>(null) }
-
-    // Receives the outcome of the system's delete-confirmation dialog.
-    val deleteLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            Toast.makeText(context, "File deleted", Toast.LENGTH_SHORT).show()
-        }
-    }
-
     val tabTitles = listOf("Large files", "Duplicates")
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -119,23 +110,8 @@ fun CleanupScreen() {
         }
     }
 
-    selectedFile?.let { file ->
-        FileActionsSheet(
-            file = file,
-            onDismiss = { selectedFile = null },
-            onShare = {
-                shareFile(context, file)
-                selectedFile = null
-            },
-            onRename = { /* TODO */ },
-            onDelete = {
-                deleteLauncher.launch(
-                    IntentSenderRequest.Builder(createDeleteIntentSender(context, file)).build()
-                )
-                selectedFile = null
-            }
-        )
-    }
+    FileActionsHost(file = selectedFile, onDismiss = { selectedFile = null })
+
 }
 
 @Composable
