@@ -48,6 +48,7 @@ import com.example.sweep.data.StorageCategory
 import com.example.sweep.screens.components.FileActionsSheet
 import com.example.sweep.screens.components.MediaRow
 import com.example.sweep.util.formatBytes
+import com.example.sweep.util.shareFile
 
 /**
  * Cleanup screen with two views: the largest files, and groups of
@@ -106,7 +107,10 @@ fun CleanupScreen() {
         FileActionsSheet(
             file = file,
             onDismiss = { selectedFile = null },
-            onShare = { /* TODO */ },
+            onShare = {
+                shareFile(context, file)
+                selectedFile = null
+            },
             onRename = { /* TODO */ },
             onDelete = { /* TODO */ }
         )
@@ -114,7 +118,11 @@ fun CleanupScreen() {
 }
 
 @Composable
-private fun LargeFilesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader, onFileClick: (FileItem) -> Unit) {
+private fun LargeFilesTab(
+    viewModel: CleanupViewModel,
+    imageLoader: ImageLoader,
+    onFileClick: (FileItem) -> Unit
+) {
     val state by viewModel.largeFiles.collectAsStateWithLifecycle()
 
     when (val current = state) {
@@ -135,7 +143,11 @@ private fun LargeFilesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader,
 }
 
 @Composable
-private fun DuplicatesTab(viewModel: CleanupViewModel, imageLoader: ImageLoader, onFileClick: (FileItem) -> Unit) {
+private fun DuplicatesTab(
+    viewModel: CleanupViewModel,
+    imageLoader: ImageLoader,
+    onFileClick: (FileItem) -> Unit
+) {
     val state by viewModel.duplicateGroups.collectAsStateWithLifecycle()
 
     when (val current = state) {
