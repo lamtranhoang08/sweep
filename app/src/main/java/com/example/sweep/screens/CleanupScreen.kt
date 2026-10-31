@@ -1,5 +1,7 @@
 package com.example.sweep.screens
 
+import android.app.Activity
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.VideoFrameDecoder
@@ -49,6 +54,7 @@ import com.example.sweep.screens.components.FileActionsSheet
 import com.example.sweep.screens.components.MediaRow
 import com.example.sweep.util.formatBytes
 import com.example.sweep.util.shareFile
+import com.example.sweep.util.createDeleteIntentSender
 
 /**
  * Cleanup screen with two views: the largest files, and groups of
@@ -81,6 +87,16 @@ fun CleanupScreen() {
 
     var selectedTab by rememberSaveable { mutableStateOf(0) }
     var selectedFile by remember { mutableStateOf<FileItem?>(null) }
+
+    // Receives the outcome of the system's delete-confirmation dialog.
+    val deleteLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            Toast.makeText(context, "File deleted", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     val tabTitles = listOf("Large files", "Duplicates")
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -112,7 +128,12 @@ fun CleanupScreen() {
                 selectedFile = null
             },
             onRename = { /* TODO */ },
-            onDelete = { /* TODO */ }
+            onDelete = {
+                deleteLauncher.launch(
+                    IntentSenderRequest.Builder(createDeleteIntentSender(context, file)).build()
+                )
+                selectedFile = null
+            }
         )
     }
 }

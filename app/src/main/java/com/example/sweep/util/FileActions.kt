@@ -3,6 +3,8 @@ package com.example.sweep.util
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
+import android.provider.MediaStore
 import android.widget.Toast
 import com.example.sweep.data.FileItem
 
@@ -28,4 +30,18 @@ fun shareFile(context: Context, file: FileItem) {
     } catch (e: ActivityNotFoundException) {
         Toast.makeText(context, "No app available to share this file.", Toast.LENGTH_SHORT).show()
     }
+}
+
+/**
+ * Builds the system request to permanently delet file
+ *
+ * Launching the returned IntentSender show's Android's own configuration
+ * dialog. File is deleted only if user allows. Android will delete the file itself
+ */
+// TODO: this delets permanently, which is what a cleanup tool needs to free
+// space. Consider MediaStore.createTrashRequest for a recoverable delete.
+// TODO: createDeleteRequest acceps a list of Uris. Add multi-select so
+// a whole duplicate group can be removed with a single confirm
+fun createDeleteIntentSender(context: Context, file: FileItem): IntentSender {
+    return MediaStore.createDeleteRequest(context.contentResolver, listOf(file.uri)).intentSender
 }
