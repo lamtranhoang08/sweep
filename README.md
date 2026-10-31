@@ -22,20 +22,20 @@ Sweep is a personal portfolio project inspired by the UX of apps like *Files by 
 ---
 
 ## Features
-
 **Implemented**
 - [x] Runtime permission handling for media access (images, video, audio)
 - [x] Bottom-navigation app shell with four sections: Browse, Gallery, Storage, Cleanup
 - [x] Browse screen with real-time device media listing
-- [x] Folder browsing via the Storage Access Framework (SAF), with persistent folder access and recursive navigation into subfolders
+- [x] Folder browsing via the Storage Access Framework (SAF), with recursive navigation into subfolders
+- [x] Storage overview with usage per category and progress bars
+- [x] Media gallery with a thumbnail grid and a full-screen image/video viewer
+- [x] Cleanup tools: largest files and duplicate detection (size grouping, then SHA-256 on candidates only)
 
 **In progress / planned**
-- [ ] Storage overview — visual breakdown of space used by category (images, video, audio, documents)
-- [ ] Media gallery with thumbnail grid and full-screen viewer
-- [ ] Cleanup tools — largest files finder and duplicate file detection
-- [ ] File actions — rename, move, delete, and share from a shared bottom sheet
-- [ ] Search across files and folders
+- [ ] File actions: share, rename, delete
+- [ ] Search across files
 - [ ] Polished empty/error states, app icon, and release build
+- [ ] Future work: moving files between folders
 
 See [Roadmap](#roadmap) for the day-by-day build plan this project follows.
 
