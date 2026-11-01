@@ -49,7 +49,7 @@ fun MediaRow(
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null
 ) {
-    val highlightColor = MaterialTheme.colorScheme.primaryContainer
+    val highlightColor = MaterialTheme.colorScheme.primary
     val name = remember(file.name, highlight, highlightColor) {
         highlightedName(file.name, highlight, highlightColor)
     }
@@ -88,7 +88,11 @@ private fun highlightedName(name: String, query: String, color: Color): Annotate
         for (word in words) {
             var start = lowerName.indexOf(word)
             while (start >= 0) {
-                addStyle(SpanStyle(background = color), start, start + word.length)
+                addStyle(
+                    SpanStyle(color = color, fontWeight = FontWeight.Bold),
+                    start,
+                    start + word.length
+                )
                 start = lowerName.indexOf(word, start + word.length)
             }
         }
