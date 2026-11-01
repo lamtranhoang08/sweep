@@ -87,7 +87,10 @@ fun AppShell() {
             composable(Screen.Storage.route) { StorageScreen() }
             composable(Screen.Cleanup.route) { CleanupScreen() }
             composable(SearchRoute.ROUTE) {
-                SearchScreen(onBack = { navController.popBackStack() })
+                SearchScreen(
+                    onBack = { navController.popBackStack() },
+                    onMediaClick = { item -> navController.navigate(MediaViewerRoute.create(item.uri)) }
+                )
             }
 
             composable(
