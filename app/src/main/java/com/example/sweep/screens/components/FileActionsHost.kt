@@ -6,10 +6,19 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.example.sweep.data.FileItem
 import com.example.sweep.util.createDeleteIntentSender
+import com.example.sweep.util.createWriteIntentSender
+import com.example.sweep.util.renameFile
 import com.example.sweep.util.shareFile
+
+/** A rename that is waiting for the user to approve the system write request */
+private data class PendingRename(val file: FileItem, val newName: String)
 
 /**
  * Shows the actions sheet for file and carries out whatever the user picks.
@@ -27,6 +36,8 @@ fun FileActionsHost(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    var renameTarget by remember { mutableStateOf<FileItem?>(null) }
+    var pendingRename by remember { mutableStateOf<PendingRename?>(null) }
 
     // Receives the outcome of the system's delete-confirmation dialog. This
     // must be created on every composition, even when no file is selected.
@@ -38,6 +49,18 @@ fun FileActionsHost(
         }
     }
 
+    val writeLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        val pending = pendingRename
+        pendingRename = null
+        if (result.resultCode == Activity.RESULT_OK && pending != null) {
+            val renamed = renameFile(context, pending.file, pending.newName)
+            val message = if (renamed) "Renamed" else "Couldn't rename. Try a different name."
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
+
     file?.let { target ->
         FileActionsSheet(
             file = target,
@@ -46,13 +69,29 @@ fun FileActionsHost(
                 shareFile(context, target)
                 onDismiss()
             },
-            // TODO: Wire up rename (createWriteRequest + a rename dialog).
-            onRename = onDismiss,
+            onRename = {
+                renameTarget = target
+                onDismiss()
+            },
             onDelete = {
                 deleteLauncher.launch(
                     IntentSenderRequest.Builder(createDeleteIntentSender(context, target)).build()
                 )
                 onDismiss()
+            }
+        )
+    }
+
+    renameTarget?.let { target ->
+        RenameDialog(
+            file = target,
+            onDismiss = { renameTarget = null },
+            onConfirm = { newName ->
+                renameTarget = null
+                pendingRename = PendingRename(target, newName)
+                writeLauncher.launch(
+                    IntentSenderRequest.Builder(createWriteIntentSender(context, target)).build()
+                )
             }
         )
     }
