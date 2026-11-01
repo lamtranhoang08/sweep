@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentSender
 import android.provider.MediaStore
 import android.widget.Toast
+import android.net.Uri
 import com.example.sweep.data.FileItem
 
 /**
@@ -38,10 +39,29 @@ fun shareFile(context: Context, file: FileItem) {
  * Launching the returned IntentSender show's Android's own configuration
  * dialog. File is deleted only if user allows. Android will delete the file itself
  */
-// TODO: this delets permanently, which is what a cleanup tool needs to free
+// TODO: this deletes permanently, which is what a cleanup tool needs to free
 // space. Consider MediaStore.createTrashRequest for a recoverable delete.
 // TODO: createDeleteRequest acceps a list of Uris. Add multi-select so
 // a whole duplicate group can be removed with a single confirm
 fun createDeleteIntentSender(context: Context, file: FileItem): IntentSender {
     return MediaStore.createDeleteRequest(context.contentResolver, listOf(file.uri)).intentSender
+}
+
+/**
+ * Open uri in another app that can display it
+ * Shows a toast if no installed app handles the file type
+ */
+// TODO: BrowseScreen has its own private copy of this logic
+// switch it to this shared, reuseable function, delete duplicate
+fun openFile(context: Context, uri: Uri) {
+    val mimeType = context.contentResolver.getType(uri) ?: "*/*"
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mimeType)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(context, "No app found to open this file.", Toast.LENGTH_SHORT).show()
+    }
 }

@@ -19,10 +19,12 @@ import com.example.sweep.screens.BrowseScreen
 import com.example.sweep.screens.CleanupScreen
 import com.example.sweep.screens.GalleryScreen
 import com.example.sweep.screens.MediaViewerScreen
+import com.example.sweep.screens.SearchScreen
 import com.example.sweep.screens.StorageScreen
+import com.example.sweep.screens.components.SearchPill
 
 /**
- * App-level scaffold: bottom navigation for the four main tabs, plus the
+ * App-level scaffold: search pill and bottom navigation for the four main tabs, plus the
  * NavHost that swaps screens. The full-screen media viewer is also routed
  * from here but is not a tab, so the bottom bar is hidden while it shows.
  */
@@ -36,6 +38,14 @@ fun AppShell() {
     val showBottomBar = bottomNavItems.any { it.route == currentRoute }
 
     Scaffold(
+        topBar = {
+            if (showBottomBar) {
+                SearchPill(
+                    onClick = { navController.navigate(SearchRoute.ROUTE) }
+                    // modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
@@ -76,6 +86,12 @@ fun AppShell() {
 
             composable(Screen.Storage.route) { StorageScreen() }
             composable(Screen.Cleanup.route) { CleanupScreen() }
+            composable(SearchRoute.ROUTE) {
+                SearchScreen(
+                    onBack = { navController.popBackStack() },
+                    onMediaClick = { item -> navController.navigate(MediaViewerRoute.create(item.uri)) }
+                )
+            }
 
             composable(
                 route = MediaViewerRoute.ROUTE,

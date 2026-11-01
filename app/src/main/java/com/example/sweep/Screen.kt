@@ -29,3 +29,11 @@ object MediaViewerRoute {
 
     fun create(uri: Uri): String = "viewer/${Uri.encode(uri.toString())}"
 }
+
+/**
+ * Route for the full-screne search. Like the viewer, it isn't a tab
+ * top and bottom bars are hidden while it shows
+ */
+object SearchRoute {
+    const val ROUTE = "search"
+}
