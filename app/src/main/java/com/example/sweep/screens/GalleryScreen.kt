@@ -39,6 +39,7 @@ import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
 import com.example.sweep.data.StorageCategory
 import com.example.sweep.screens.components.FileActionsHost
+import com.example.sweep.LocalAppContainer
 
 /**
  * Grid of image and video thumbnails.
@@ -50,31 +51,16 @@ import com.example.sweep.screens.components.FileActionsHost
 fun GalleryScreen(
     onItemClick: (FileItem) -> Unit = {}
 ) {
-    val context = LocalContext.current
-
-    // TODO: Same duplication as StorageScreen/BrowseScreen: each screen builds
-    // its own repository. Replace with a shared AppContainer
-    val repository = remember {
-        FileRepositoryImpl(
-            mediaStoreDataSource = MediaStoreDataSource(context.applicationContext),
-            fileSystemDataSource = FileSystemDataSource(context.applicationContext),
-            fileHasher = FileHasher(context.applicationContext)
-        )
-    }
+    val container = LocalAppContainer.current
 
     val viewModel: GalleryViewModel = viewModel(
-        factory = GalleryViewModel.Factory(repository)
+        factory = GalleryViewModel.Factory(container.repository)
     )
 
     val items by viewModel.mediaItems.collectAsStateWithLifecycle()
     var selectedFile by remember { mutableStateOf<FileItem?>(null) }
 
-    // Coil can't draw a frame from a video file out of the box. This loader
-    // adds the video decoder (from the coil-video dependency) so video items get a thumbnail too
-    val imageLoader = remember {
-        ImageLoader.Builder(context).components { add(VideoFrameDecoder.Factory()) }
-            .build()
-    }
+    val imageLoader = container.imageLoader
 
     if (items.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
