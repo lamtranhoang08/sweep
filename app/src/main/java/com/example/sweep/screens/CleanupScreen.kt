@@ -57,6 +57,9 @@ import com.example.sweep.util.formatBytes
 import com.example.sweep.util.shareFile
 import com.example.sweep.util.createDeleteIntentSender
 import com.example.sweep.LocalAppContainer
+import com.example.sweep.screens.components.CenteredLoading
+import com.example.sweep.screens.components.CenteredMessage
+
 /**
  * Cleanup screen with two views: the largest files, and groups of
  * duplicate files. View-only for now; deleting comes with file actions.
@@ -175,30 +178,6 @@ private fun GroupHeader(group: DuplicateGroup) {
             text = "${group.files.size} copies · ${formatBytes(group.reclaimableBytes)} reclaimable",
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-        )
-    }
-}
-
-@Composable
-private fun CenteredLoading(message: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            CircularProgressIndicator()
-            Text(message)
-        }
-    }
-}
-
-@Composable
-private fun CenteredMessage(message: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

@@ -8,6 +8,7 @@ import com.example.sweep.data.FileRepository
 import com.example.sweep.data.StorageCategory
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -23,21 +24,21 @@ import kotlinx.coroutines.flow.stateIn
 class GalleryViewModel(
     repository: FileRepository
 ) : ViewModel() {
-    // TODO: initialValue is emptyList(), so the screen can briefly flash
-    //  "No media found" while loading. Wrap in LoadState (like Cleanup) to
-    //  tell "loading" apart from "empty".
-    val mediaItems: StateFlow<List<FileItem>> =
+    val mediaItems: StateFlow<LoadState<List<FileItem>>> =
         repository.getFiles()
-            .map { items ->
-                items.filter {
-                    it.category == StorageCategory.IMAGE ||
-                            it.category == StorageCategory.VIDEO
-                }
+            .map<List<FileItem>, LoadState<List<FileItem>>> { items ->
+                LoadState.Success(
+                    items.filter {
+                        it.category == StorageCategory.IMAGE ||
+                                it.category == StorageCategory.VIDEO
+                    }
+                )
             }
+            .catch { emit(LoadState.Error(it.message ?: "Couldn't load your media")) }
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-                initialValue = emptyList()
+                initialValue = LoadState.Loading
             )
 
     /**
