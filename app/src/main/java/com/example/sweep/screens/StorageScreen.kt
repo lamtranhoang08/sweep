@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sweep.LocalAppContainer
 import com.example.sweep.data.FileHasher
 import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
@@ -38,20 +39,9 @@ import java.util.Locale
 
 @Composable
 fun StorageScreen(
-    // TODO: Both StorageScreen and BrowseScreen currently construct their own
-    //  separate FileRepositoryImpl + data source instances. This works but
-    //  creates duplicate objects across screens. Introduce a shared AppContainer
-    //  (simple manual DI holder) so every screen gets the same repository instance.
     viewModel: StorageViewModel = viewModel(
         factory = StorageViewModel.Factory(
-            FileRepositoryImpl(
-                mediaStoreDataSource = MediaStoreDataSource(
-                    LocalContext.current.applicationContext
-                ),
-                fileSystemDataSource = FileSystemDataSource(LocalContext.current.applicationContext),
-                fileHasher = FileHasher(LocalContext.current.applicationContext)
-            )
-        )
+            LocalAppContainer.current.repository)
     )
 ) {
     val summary by viewModel.storageSummary.collectAsStateWithLifecycle()

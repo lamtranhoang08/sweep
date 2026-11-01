@@ -53,6 +53,7 @@ import com.example.sweep.data.StorageCategory
 import com.example.sweep.screens.components.FileActionsHost
 import com.example.sweep.screens.components.MediaRow
 import com.example.sweep.util.openFile
+import com.example.sweep.LocalAppContainer
 
 /**
  * Type filters shown as chips,
@@ -79,19 +80,10 @@ fun SearchScreen(
     onMediaClick: (FileItem) -> Unit
 ) {
     val context = LocalContext.current
-
-    // TODO: Same repository and ImageLoader duplication as the other screens;
-    //  replace with a shared AppContainer.
-    val repository = remember {
-        FileRepositoryImpl(
-            mediaStoreDataSource = MediaStoreDataSource(context.applicationContext),
-            fileSystemDataSource = FileSystemDataSource(context.applicationContext),
-            fileHasher = FileHasher(context.applicationContext)
-        )
-    }
+    val container = LocalAppContainer.current
 
     val viewModel: SearchViewModel = viewModel(
-        factory = SearchViewModel.Factory(repository)
+        factory = SearchViewModel.Factory(container.repository)
     )
 
     val query by viewModel.query.collectAsStateWithLifecycle()
@@ -99,9 +91,7 @@ fun SearchScreen(
     val results by viewModel.results.collectAsStateWithLifecycle()
 
     val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .components { add(VideoFrameDecoder.Factory()) }
-            .build()
+       container.imageLoader
     }
 
     var selectedFile by remember { mutableStateOf<FileItem?>(null) }

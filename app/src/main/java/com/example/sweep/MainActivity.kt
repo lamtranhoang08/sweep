@@ -8,15 +8,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.CompositionLocalProvider
 import com.example.sweep.ui.theme.SweepTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // One AppConatiner shared across the whole app process
+        // owned by SweepApplication
+        val container = (application as SweepApplication).container
+
         setContent {
-            SweepTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                CompositionLocalProvider(LocalAppContainer provides container) {
                     AppRoot()
                 }
             }
@@ -29,7 +35,7 @@ fun AppRoot() {
     var granted by remember { mutableStateOf(false) }
 
     if (granted) {
-       AppShell()
+        AppShell()
     } else {
         PermissionRequester(onGranted = { granted = true })
     }

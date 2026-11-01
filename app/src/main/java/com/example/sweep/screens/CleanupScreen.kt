@@ -56,35 +56,20 @@ import com.example.sweep.screens.components.MediaRow
 import com.example.sweep.util.formatBytes
 import com.example.sweep.util.shareFile
 import com.example.sweep.util.createDeleteIntentSender
-
+import com.example.sweep.LocalAppContainer
 /**
  * Cleanup screen with two views: the largest files, and groups of
  * duplicate files. View-only for now; deleting comes with file actions.
  */
 @Composable
 fun CleanupScreen() {
-    val context = LocalContext.current
-
-    // TODO: Same repository duplication as the other screens; replace with a
-    //  shared AppContainer. The ImageLoader below is also built separately in
-    //  GalleryScreen and could be one app-wide instance.
-    val repository = remember {
-        FileRepositoryImpl(
-            mediaStoreDataSource = MediaStoreDataSource(context.applicationContext),
-            fileSystemDataSource = FileSystemDataSource(context.applicationContext),
-            fileHasher = FileHasher(context.applicationContext)
-        )
-    }
+    val container = LocalAppContainer.current
 
     val viewModel: CleanupViewModel = viewModel(
-        factory = CleanupViewModel.Factory(repository)
+        factory = CleanupViewModel.Factory(container.repository)
     )
 
-    val imageLoader = remember {
-        ImageLoader.Builder(context)
-            .components { add(VideoFrameDecoder.Factory()) }
-            .build()
-    }
+   val imageLoader = container.imageLoader
 
     var selectedTab by rememberSaveable { mutableStateOf(0) }
     var selectedFile by remember { mutableStateOf<FileItem?>(null) }

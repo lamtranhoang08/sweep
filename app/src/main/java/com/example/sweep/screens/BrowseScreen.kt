@@ -33,6 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.sweep.LocalAppContainer
 import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
@@ -47,20 +48,9 @@ import com.example.sweep.util.formatBytes
  */
 @Composable
 fun BrowseScreen(
-    // TODO: Same repository duplication as the other screens, and it's rebuilt on
-    // every recomposition here (default-parameter expression). Replace with a
-    // shared AppContainer.
     viewModel: BrowseViewModel = viewModel(
         factory = BrowseViewModel.Factory(
-            FileRepositoryImpl(
-                mediaStoreDataSource = MediaStoreDataSource(
-                    LocalContext.current.applicationContext
-                ),
-                fileSystemDataSource = FileSystemDataSource(
-                    LocalContext.current.applicationContext
-                ),
-                fileHasher = FileHasher(LocalContext.current.applicationContext)
-            )
+            LocalAppContainer.current.repository
         )
     )
 ) {
