@@ -1,193 +1,96 @@
 # Sweep
 
-A lightweight, native Android file manager — browse files and folders, view media, monitor storage usage, and clean up space, all in a small, focused app built entirely with modern Android tooling.
+A small, native Android file manager: browse folders, view media, search, and find the files eating your storage.
 
-Sweep is a personal portfolio project inspired by the UX of apps like *Files by Google*, deliberately scoped down to a size one developer can design, build, and ship end-to-end while demonstrating real architectural decisions rather than following a tutorial. It is not affiliated with or endorsed by Google.
+Built with Kotlin and Jetpack Compose as a portfolio project. It's scoped to what one developer can design and finish, with the focus on getting the hard parts of Android storage right rather than on feature count.
 
----
+<p align="center">
+  <img src="docs/screenshots/gallery.png" width="22%" alt="Gallery" />
+  <img src="docs/screenshots/search.png" width="22%" alt="Search" />
+  <img src="docs/screenshots/storage.png" width="22%" alt="Storage" />
+  <img src="docs/screenshots/cleanup.png" width="22%" alt="Cleanup" />
+</p>
 
-## Table of Contents
+## What it does
 
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Permissions](#permissions)
-- [Roadmap](#roadmap)
-- [Engineering Notes](#engineering-notes)
-- [License](#license)
+- **Browse**: all device media, or any folder you pick, with subfolder navigation
+- **Gallery**: thumbnail grid and a full-screen viewer for photos and videos
+- **Storage**: usage by category (images, video, audio)
+- **Cleanup**: largest files and exact-duplicate detection
+- **Search**: by file name, with type filters and highlighted matches
+- **Actions**: share, rename and delete from any list
 
----
+Everything runs on the device. There is no backend and no network access.
 
-## Features
-**Implemented**
-- [x] Runtime permission handling for media access (images, video, audio)
-- [x] Bottom-navigation app shell with four sections: Browse, Gallery, Storage, Cleanup
-- [x] Browse screen with real-time device media listing
-- [x] Folder browsing via the Storage Access Framework (SAF), with recursive navigation into subfolders
-- [x] Storage overview with usage per category and progress bars
-- [x] Media gallery with a thumbnail grid and a full-screen image/video viewer
-- [x] Cleanup tools: largest files and duplicate detection (size grouping, then SHA-256 on candidates only)
+## Technical highlights
 
-**In progress / planned**
-- [ ] File actions: share, rename, delete
-- [ ] Search across files
-- [ ] Polished empty/error states, app icon, and release build
-- [ ] Future work: moving files between folders
-
-See [Roadmap](#roadmap) for the day-by-day build plan this project follows.
-
----
-
-## Screenshots
-
-*Screenshots will be added here as each screen is completed.*
-
-| Browse | Storage | Gallery | Cleanup |
-|---|---|---|---|
-| _coming soon_ | _coming soon_ | _coming soon_ | _coming soon_ |
-
----
-
-## Tech Stack
-
-- **Language:** [Kotlin](https://kotlinlang.org/)
-- **UI:** [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- **Architecture:** MVVM (Model–View–ViewModel)
-- **Async / reactive state:** Kotlin Coroutines & Flow
-- **Navigation:** Jetpack Navigation for Compose
-- **File access:**
-  - [`MediaStore`](https://developer.android.com/training/data-storage/shared/media) for indexed media (images, video, audio)
-  - [Storage Access Framework](https://developer.android.com/training/data-storage/shared/documents-files) (`DocumentFile`) for general folder browsing
-- **Dependency injection:** manual constructor injection (no DI framework yet, by design — see [Engineering Notes](#engineering-notes))
-
----
+| Problem | Approach |
+|---|---|
+| Modern Android restricts file access | MediaStore for media, the Storage Access Framework for folders, and no `MANAGE_EXTERNAL_STORAGE`. Rename and delete go through the system's own approval dialogs (`createWriteRequest`, `createDeleteRequest`). |
+| Lists going stale after a change | The media stream is a `ContentObserver` wrapped in `callbackFlow`, so every screen updates by itself when media changes. |
+| Finding duplicates without reading every file | Group by size first, then hash only same-size candidates (SHA-256, streamed in chunks). Runs off the main thread and cancels promptly (`flowOn`, `mapLatest`, `ensureActive`). |
+| Search that feels instant | The library is held in memory and each keystroke filters it (debounced) instead of re-querying. Results carry the query they were computed for, so the UI can tell "still searching" from "no matches". |
+| Empty screens that are really loading | A `LoadState` (Loading / Success / Error) on the list screens. |
+| Permission dead ends | Explains why access is needed, re-asks, and sends the user to Settings once Android stops showing its dialog. |
 
 ## Architecture
 
-Sweep follows MVVM with a strict one-directional dependency rule: each layer depends only on the layer directly beneath it.
-
 ```
-┌─────────────────────────────────────────┐
-│                UI Layer                  │
-│     Jetpack Compose screens & nav        │
-└───────────────────┬───────────────────────┘
-                    │
-┌───────────────────▼───────────────────────┐
-│              ViewModel Layer               │
-│   Holds UI state, exposes StateFlow        │
-└───────────────────┬───────────────────────┘
-                    │
-┌───────────────────▼───────────────────────┐
-│             Repository Layer               │
-│  Combines & exposes data as Flow           │
-└──────────┬────────────────────┬────────────┘
-           │                    │
-┌──────────▼──────────┐ ┌──────▼───────────┐
-│     MediaStore        │ │   File system    │
-│   (media queries)      │ │  (SAF browsing) │
-└────────────────────────┘ └─────────────────┘
+Compose screens  ->  ViewModels (StateFlow)  ->  FileRepository (interface)
+                                                        |
+                                       +----------------+----------------+
+                                MediaStoreDataSource            FileSystemDataSource (SAF)
 ```
 
-**Why this shape:** a `Screen` composable never talks to `MediaStore` or the file system directly — it only observes a `ViewModel`'s `StateFlow`. A `ViewModel` never queries data directly — it only calls a `FileRepository` interface. This means the underlying data source can change, or be replaced with a fake for testing, without touching the UI at all (dependency inversion).
+Screens only observe a ViewModel's `StateFlow`. ViewModels depend on the `FileRepository` interface, never on a concrete data source, so the data layer can be swapped or faked in tests. Dependencies are wired by hand in a single `AppContainer`; with a graph this small, a DI framework would add more ceremony than value.
 
----
-
-## Project Structure
+## Project structure
 
 ```
-app/src/main/java/com/example/sweep/
-
-MainActivity.kt          entry point; hosts the permission gate and app shell
-PermissionRequester.kt   reusable runtime permission request composable
-Screen.kt                navigation route + bottom tab definitions
-AppShell.kt              Scaffold, bottom navigation, and NavHost
-
-data/
-    FileItem.kt              domain model shared across all screens
-    FileRepository.kt        repository interface (the contract)
-    FileRepositoryImpl.kt    combines data sources behind the interface
-    MediaStoreDataSource.kt  raw MediaStore queries
-    FileSystemDataSource.kt  raw SAF / DocumentFile browsing
-
-screens/
-    BrowseScreen.kt + BrowseViewModel.kt
-    GalleryScreen.kt + GalleryViewModel.kt
-    StorageScreen.kt + StorageViewModel.kt
-    CleanupScreen.kt + CleanupViewModel.kt
-
-ui/theme/                Compose theme (colors, typography)
+com.example.sweep
+├── MainActivity, SweepApplication, AppContainer   entry point and manual DI
+├── AppShell, Screen, PermissionRequester          navigation and permission gate
+├── data/                                          models, repository, MediaStore and SAF sources,
+│                                                  duplicate hashing, search matching
+├── screens/                                       one screen + ViewModel per feature
+│   └── components/                                shared UI (file rows, actions sheet, search pill)
+├── util/                                          byte formatting, file actions, file-name helpers
+└── ui/theme/                                      Compose theme
 ```
 
-A file's folder tells you its role: `data/` never imports Compose, `screens/` never queries data sources directly, and a screen's ViewModel always lives beside its screen.
+`data/` never imports Compose, and screens never touch data sources directly.
 
----
+## Tech stack
 
-## Getting Started
+Kotlin, Jetpack Compose (Material 3), Navigation Compose, Coroutines and Flow, Coil (with video frame thumbnails), MediaStore, Storage Access Framework.
 
-### Prerequisites
-- [Android Studio](https://developer.android.com/studio) (recent stable version)
-- Android SDK with API level 33+ installed
-- An emulator or physical device running Android 13 (API 33) or newer
+## Getting started
 
-### Setup
+Requires Android Studio and a device or emulator running Android 13 (API 33) or newer.
+
 ```bash
 git clone https://github.com/lamtranhoang08/sweep.git
-cd sweep
 ```
 
-1. Open the project in Android Studio.
-2. Let Gradle sync automatically (first sync may take a few minutes).
-3. Run the app on an emulator or connected device via the Run button.
-4. Grant media permissions when prompted, or use the "Pick a folder to browse" button to grant access to a specific folder via the system picker.
+Open the folder in Android Studio, let Gradle sync, and run. Grant the media permissions when asked. On a fresh emulator, take a photo with the Camera app so there is something to show.
 
-No API keys, backend services, or additional configuration are required — Sweep is fully local and works entirely offline.
+Sweep requests `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO` and `READ_MEDIA_AUDIO`, and browses other folders through the system folder picker. It does not request all-files access.
 
----
+## Status
 
-## Permissions
+Core features are complete. In progress: back navigation and a remembered folder in Browse, unit tests, and release polish (icon, string resources).
 
-Sweep requests the minimum permissions needed for each feature, rather than broad storage access:
-
-| Permission | Why it's needed |
-|---|---|
-| `READ_MEDIA_IMAGES` | List and display images via MediaStore |
-| `READ_MEDIA_VIDEO` | List and display videos via MediaStore |
-| `READ_MEDIA_AUDIO` | List and display audio files via MediaStore |
-| Storage Access Framework (no manifest permission) | Browse a specific folder the user explicitly picks |
-
-Sweep deliberately does **not** request `MANAGE_EXTERNAL_STORAGE` (all-files access), since it isn't necessary for the app's scope and would require additional Play Store justification for a real release.
-
----
-
-## Roadmap
-
-This project is being built on a 7-day milestone plan:
-
-| Day | Focus |
-|---|---|
-| 1 | Project setup, permissions, navigation shell |
-| 2 | File repository layer, real Browse screen |
-| 3 | Storage overview screen |
-| 4 | Media gallery + viewer |
-| 5 | Cleanup tools (large files, duplicates) |
-| 6 | File actions (rename/move/delete/share) + search |
-| 7 | Polish, documentation, and release |
-
----
-
-## Engineering Notes
-
-A few deliberate decisions worth calling out:
-
-- **Manual DI before Hilt:** dependencies are currently passed through constructors by hand rather than via a DI framework. This keeps the object graph easy to reason about while the codebase is small; introducing Hilt once the graph grows is a natural next step.
-- **Scoped storage, not legacy file access:** rather than requesting broad storage permissions, Sweep uses MediaStore for indexed media and the Storage Access Framework for general folders — the approach Android expects modern apps to use.
-- **No system cache cleanup:** unlike apps with system-level privileges, Sweep's cleanup tools focus on large-file and duplicate-file detection rather than clearing app caches, which requires privileged access outside the scope of a standard app.
-
----
+**Known limitations**, each tracked as a `TODO` in the code:
+- Files browsed through the folder picker can be opened but not renamed or deleted yet.
+- Cleanup and search cover indexed media only; the media permissions don't expose documents or downloads.
+- Delete is permanent, with no trash.
+- The viewer has no swipe between items or pinch-to-zoom.
+- Moving files between folders is not implemented.
 
 ## License
 
-This project is available under the [MIT License](LICENSE).
+MIT. See [LICENSE](LICENSE).
+
+---
+
+Inspired by the UX of Files by Google. Not affiliated with or endorsed by Google.
