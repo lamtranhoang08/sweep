@@ -49,8 +49,8 @@ class SearchViewModel(
     private val _category = MutableStateFlow<StorageCategory?>(null)
     val category: StateFlow<StorageCategory?> = _category.asStateFlow()
 
-    // TODO: Add a LoadState for the first library load, so a very early search
-    // can't flash "No files match" before the library has loaded.
+    // TODO: while the library first loads, the results area stays blank with no spinner
+    // Expose a loading flag so a slow first load shows progress
     val results: StateFlow<SearchResults> = combine(
         repository.getFiles(),
         // Wait for a pause in typing before searching, but react instantly

@@ -40,6 +40,8 @@ import com.example.sweep.data.MediaStoreDataSource
 import com.example.sweep.data.StorageCategory
 import com.example.sweep.screens.components.FileActionsHost
 import com.example.sweep.LocalAppContainer
+import com.example.sweep.screens.components.CenteredLoading
+import com.example.sweep.screens.components.CenteredMessage
 
 /**
  * Grid of image and video thumbnails.
@@ -57,31 +59,36 @@ fun GalleryScreen(
         factory = GalleryViewModel.Factory(container.repository)
     )
 
-    val items by viewModel.mediaItems.collectAsStateWithLifecycle()
+    val state by viewModel.mediaItems.collectAsStateWithLifecycle()
     var selectedFile by remember { mutableStateOf<FileItem?>(null) }
 
     val imageLoader = container.imageLoader
 
-    if (items.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No media found")
-        }
-    } else {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 110.dp),
-            contentPadding = PaddingValues(4.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(items, key = { it.uri.toString() }) { item ->
-                MediaThumbnail(
-                    item = item,
-                    imageLoader = imageLoader,
-                    onClick = { onItemClick(item) },
-                    onLongClick = { selectedFile = item }
-                )
+    when (val current = state) {
+        LoadState.Loading -> CenteredLoading("Loading your media...")
+        is LoadState.Error -> CenteredMessage(current.message)
+        is LoadState.Success -> {
+            if (current.data.isEmpty()) {
+                CenteredMessage("No photos or videos found")
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 110.dp),
+                    contentPadding = PaddingValues(4.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(current.data, key = { it.uri.toString() }) { item ->
+                        MediaThumbnail(
+                            item = item,
+                            imageLoader = container.imageLoader,
+                            onClick = { onItemClick(item) },
+                            onLongClick = { selectedFile = item }
+                        )
+                    }
+                }
             }
         }
     }
+
     FileActionsHost(file = selectedFile, onDismiss = { selectedFile = null })
 }
 
