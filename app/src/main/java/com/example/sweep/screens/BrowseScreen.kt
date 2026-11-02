@@ -77,7 +77,6 @@ fun BrowseScreen(
                 it,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
-//            viewModel.openFolder(it)
             viewModel.pickFolder(it)
         }
     }
