@@ -36,14 +36,14 @@ fun shareFile(context: Context, file: FileItem) {
 }
 
 /**
- * Builds the system request to permanently delet file
+ * Builds the system request to permanently delete file
  *
  * Launching the returned IntentSender show's Android's own configuration
  * dialog. File is deleted only if user allows. Android will delete the file itself
  */
 // TODO: this deletes permanently, which is what a cleanup tool needs to free
 // space. Consider MediaStore.createTrashRequest for a recoverable delete.
-// TODO: createDeleteRequest acceps a list of Uris. Add multi-select so
+// TODO: createDeleteRequest accepts a list of Uris. Add multi-select so
 // a whole duplicate group can be removed with a single confirm
 fun createDeleteIntentSender(context: Context, file: FileItem): IntentSender {
     return MediaStore.createDeleteRequest(context.contentResolver, listOf(file.uri)).intentSender
@@ -53,8 +53,6 @@ fun createDeleteIntentSender(context: Context, file: FileItem): IntentSender {
  * Open uri in another app that can display it
  * Shows a toast if no installed app handles the file type
  */
-// TODO: BrowseScreen has its own private copy of this logic
-// switch it to this shared, reuseable function, delete duplicate
 fun openFile(context: Context, uri: Uri) {
     val mimeType = context.contentResolver.getType(uri) ?: "*/*"
     val intent = Intent(Intent.ACTION_VIEW).apply {

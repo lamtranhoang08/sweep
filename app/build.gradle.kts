@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     // File Management Utilities
     implementation(libs.androidx.documentfile)
