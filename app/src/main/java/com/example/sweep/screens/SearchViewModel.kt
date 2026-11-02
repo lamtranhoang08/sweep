@@ -7,6 +7,7 @@ import com.example.sweep.data.FileItem
 import com.example.sweep.data.FileRepository
 import com.example.sweep.data.StorageCategory
 import com.example.sweep.data.searchFiles
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,10 +36,14 @@ data class SearchResults(
  * The media library is collected once. Each keystroke re-filters that list in
  * memory instead of re-querying MediaStore, and because the library flow is
  * live, results also update if files change while the user is searching.
+ *
+ * @param computationDispatcher Where the filtering runs. Injected so tests can run it
+ * on virtual time instead of waiting for the real debounce delay
  */
 @OptIn(FlowPreview::class)
 class SearchViewModel(
-    repository: FileRepository
+    repository: FileRepository,
+    computationDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     // The text field reads this directly, so typing shows up instantly.
@@ -61,7 +66,7 @@ class SearchViewModel(
         SearchResults(query, searchFiles(items, query, category))
     }
         // Filtering is CPU work, so keep it off the main thread.
-        .flowOn(Dispatchers.Default)
+        .flowOn(computationDispatcher)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
