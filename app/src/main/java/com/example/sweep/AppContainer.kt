@@ -9,6 +9,7 @@ import com.example.sweep.data.FileRepository
 import com.example.sweep.data.FileRepositoryImpl
 import com.example.sweep.data.FileSystemDataSource
 import com.example.sweep.data.MediaStoreDataSource
+import com.example.sweep.data.FolderPreferences
 
 /**
  * Builds the app's shared dependencies once and hands them out.
@@ -22,6 +23,9 @@ import com.example.sweep.data.MediaStoreDataSource
 class AppContainer(context: Context) {
 
     private val appContext = context.applicationContext
+
+    /** Remembers the folder picked in Browse across restarts. */
+    val folderPreferences: FolderPreferences by lazy { FolderPreferences(appContext) }
 
     /** Exposed as the interface so callers can't depend on the implementation. */
     val repository: FileRepository by lazy {
