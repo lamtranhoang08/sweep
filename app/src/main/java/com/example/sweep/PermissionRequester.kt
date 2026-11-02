@@ -38,6 +38,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 /** All  three are needed: the library, duplicate scan and totals cover every media type */
 private val REQUIRED_PERMISSIONS = arrayOf(
@@ -74,61 +77,78 @@ private fun openAppSettings(context: Context) {
  * why access is needed and walks the user through granting it,
  * including the case where Android will no longer show system dialog.
  */
+
 @Composable
 fun PermissionRequester(onGranted: () -> Unit) {
     val context = LocalContext.current
-    if (hasAllMediaAccess(context)) {
-        LaunchedEffect(Unit) { onGranted() }
-    } else {
-        PermissionPrompt(onGranted)
+    val activity = context.findActivity()
+
+    var hasPermission by remember {
+        mutableStateOf(hasAllMediaAccess(context))
     }
-}
 
-@Composable
-private fun PermissionPrompt(onGranted: () -> Unit) {
-    val context = LocalContext.current
+    var showExplanation by rememberSaveable {
+        mutableStateOf(false)
+    }
 
-    // Saveable so rotating the phone doesn't re-ask or forget a refusal.
-    var hasAsked by rememberSaveable { mutableStateOf(false) }
-    var permanentlyDenied by rememberSaveable { mutableStateOf(false) }
+    var permanentlyDenied by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        if (results.values.all { it }) {
-            onGranted()
-        } else {
-            // After a denial, "should show rationale" is true while the system
-            // will still show its dialog, and false once it won't (denied twice).
-            val activity = context.findActivity()
-            permanentlyDenied = activity != null && REQUIRED_PERMISSIONS.any { permission ->
-                !isGranted(context, permission) &&
-                        !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
-            }
+    ) {
+        // Always check the actual permission state.
+        hasPermission = hasAllMediaAccess(context)
+
+        if (!hasPermission) {
+            showExplanation = true
+
+            permanentlyDenied = activity != null &&
+                    REQUIRED_PERMISSIONS.any { permission ->
+                        !isGranted(context, permission) &&
+                                !ActivityCompat.shouldShowRequestPermissionRationale(
+                                    activity,
+                                    permission
+                                )
+                    }
         }
     }
 
-    // Ask once automatically the first time, with the explanation behind the dialog.
+    // Automatically request permission on the first launch.
     LaunchedEffect(Unit) {
-        if (!hasAsked) {
-            hasAsked = true
+        if (!hasPermission) {
             launcher.launch(REQUIRED_PERMISSIONS)
         }
     }
 
-    // Returning from Settings: carry on if access was switched on there.
+    // Handle permission changes when returning from Settings.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        if (hasAllMediaAccess(context)) onGranted()
+        hasPermission = hasAllMediaAccess(context)
     }
 
-    PermissionExplanation(
-        permanentlyDenied = permanentlyDenied,
-        onActionClick = {
-            if (permanentlyDenied) openAppSettings(context)
-            else launcher.launch(REQUIRED_PERMISSIONS)
+    // Continue into Sweep once access is granted.
+    LaunchedEffect(hasPermission) {
+        if (hasPermission) {
+            onGranted()
         }
-    )
+    }
+
+    // Only display the explanation after the user denies access.
+    if (!hasPermission && showExplanation) {
+        PermissionExplanation(
+            permanentlyDenied = permanentlyDenied,
+            onActionClick = {
+                if (permanentlyDenied) {
+                    openAppSettings(context)
+                } else {
+                    launcher.launch(REQUIRED_PERMISSIONS)
+                }
+            }
+        )
+    }
 }
+
 
 // TODO: Move user-facing strings into strings.xml (needed for localization).
 @Composable
