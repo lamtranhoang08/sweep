@@ -155,9 +155,6 @@ private fun CategoryRow(
  * has a lighter tone for dark surfaces and a deeper one for light surfaces, so every bar
  * keeps enough contrast with its backgroumd
  */
-// TODO: category colors are currently hardcoded hex values. Revisit using
-//  theme-aware colors (MaterialTheme.colorScheme) so this adapts properly
-//  to dark mode / Material You dynamic color later.
 @Composable
 private fun getCategoryColor(category: StorageCategory): Color {
     val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
