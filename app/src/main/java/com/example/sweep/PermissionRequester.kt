@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
@@ -27,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,15 +41,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 
-/** All  three are needed: the library, duplicate scan and totals cover every media type */
+/** All three are needed: the library, duplicate scan and totals cover every media type. */
 private val REQUIRED_PERMISSIONS = arrayOf(
     Manifest.permission.READ_MEDIA_IMAGES,
-    Manifest.permission.READ_MEDIA_AUDIO,
-    Manifest.permission.READ_MEDIA_VIDEO
+    Manifest.permission.READ_MEDIA_VIDEO,
+    Manifest.permission.READ_MEDIA_AUDIO
 )
 
 private fun isGranted(context: Context, permission: String): Boolean =
@@ -71,84 +71,75 @@ private fun openAppSettings(context: Context) {
 }
 
 /**
- * Gate that shows its content only once media access is granted.
+ * Gate that lets the app through once media access is granted.
  *
- * if access us already granted, [onGranted] fires immediately. Otherwise, it explains
- * why access is needed and walks the user through granting it,
- * including the case where Android will no longer show system dialog.
+ * It asks for access straight away and draws nothing while the system dialog
+ * is up, so a user who allows everything never sees an explanation. Only
+ * after a denial does it explain why access is needed, offer to ask again,
+ * and, once Android stops showing its dialog, send the user to Settings. It
+ * continues on its own when access is granted, including from Settings.
  */
-
 @Composable
 fun PermissionRequester(onGranted: () -> Unit) {
     val context = LocalContext.current
-    val activity = context.findActivity()
 
-    var hasPermission by remember {
-        mutableStateOf(hasAllMediaAccess(context))
-    }
+    // The real permission state, re-read whenever it could have changed.
+    var hasPermission by remember { mutableStateOf(hasAllMediaAccess(context)) }
 
-    var showExplanation by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-    var permanentlyDenied by rememberSaveable {
-        mutableStateOf(false)
-    }
+    // Saved so rotation neither re-asks nor forgets a denial.
+    var hasAsked by rememberSaveable { mutableStateOf(false) }
+    var showExplanation by rememberSaveable { mutableStateOf(false) }
+    var permanentlyDenied by rememberSaveable { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        // Always check the actual permission state.
+    ) { results ->
         hasPermission = hasAllMediaAccess(context)
 
-        if (!hasPermission) {
+        // An empty result means the request was interrupted (for example by a
+        // rotation), not that the user said no, so there is nothing to explain yet.
+        if (!hasPermission && results.isNotEmpty()) {
             showExplanation = true
 
-            permanentlyDenied = activity != null &&
-                    REQUIRED_PERMISSIONS.any { permission ->
-                        !isGranted(context, permission) &&
-                                !ActivityCompat.shouldShowRequestPermissionRationale(
-                                    activity,
-                                    permission
-                                )
-                    }
+            // "Rationale" turns false once Android will no longer show its dialog
+            // for a permission the user has denied. Only count an explicit denial.
+            val activity = context.findActivity()
+            permanentlyDenied = activity != null && REQUIRED_PERMISSIONS.any { permission ->
+                results[permission] == false &&
+                        !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+            }
         }
     }
 
-    // Automatically request permission on the first launch.
+    // Ask once, immediately, without an explanation screen first.
     LaunchedEffect(Unit) {
-        if (!hasPermission) {
+        if (!hasPermission && !hasAsked) {
+            hasAsked = true
             launcher.launch(REQUIRED_PERMISSIONS)
         }
     }
 
-    // Handle permission changes when returning from Settings.
+    // Returning from Settings: pick up any change made there.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         hasPermission = hasAllMediaAccess(context)
     }
 
-    // Continue into Sweep once access is granted.
+    // Continue into Sweep as soon as access is granted.
     LaunchedEffect(hasPermission) {
-        if (hasPermission) {
-            onGranted()
-        }
+        if (hasPermission) onGranted()
     }
 
-    // Only display the explanation after the user denies access.
+    // The explanation only ever appears after a denial.
     if (!hasPermission && showExplanation) {
         PermissionExplanation(
             permanentlyDenied = permanentlyDenied,
             onActionClick = {
-                if (permanentlyDenied) {
-                    openAppSettings(context)
-                } else {
-                    launcher.launch(REQUIRED_PERMISSIONS)
-                }
+                if (permanentlyDenied) openAppSettings(context)
+                else launcher.launch(REQUIRED_PERMISSIONS)
             }
         )
     }
 }
-
 
 // TODO: Move user-facing strings into strings.xml (needed for localization).
 @Composable
@@ -159,6 +150,7 @@ private fun PermissionExplanation(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -182,7 +174,8 @@ private fun PermissionExplanation(
 
         Text(
             text = if (permanentlyDenied) {
-                "Access is turned off. Please enable access to media and files in Settings. "
+                "Access is turned off. Open settings, choose Permissions, and allow " +
+                        "Photos and videos and Music and audio."
             } else {
                 "Sweep needs your photos, videos, and audio to show your library, " +
                         "find duplicates, and measure storage. Everything stays on your device."
