@@ -17,13 +17,33 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // The release key lives in ~/.gradle/gradle.properties, never in the repo.
+    // Without those properties (a fresh clone, CI), the release build is
+    // simply unsigned instead of failing.
+    val hasReleaseKey = project.hasProperty("SWEEP_STORE_FILE")
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = file(project.property("SWEEP_STORE_FILE") as String)
+                storePassword = project.property("SWEEP_STORE_PASSWORD") as String
+                keyAlias = project.property("SWEEP_KEY_ALIAS") as String
+                keyPassword = project.property("SWEEP_KEY_PASSWORD") as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (hasReleaseKey) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

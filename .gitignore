@@ -41,3 +41,4 @@ local.properties
 
 # OS metadata
 Thumbs.db
+*.jks
