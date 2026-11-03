@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -148,17 +149,19 @@ private fun CategoryRow(
 }
 
 /**
- * Maps each [StorageCategory] to a distinct Material theme visual indicator color.
+ * Colour for each storage category's bar and dot.
+ *
+ * These are deliberately fixed colours instead of theme roles. Each category
+ * has a lighter tone for dark surfaces and a deeper one for light surfaces, so every bar
+ * keeps enough contrast with its backgroumd
  */
-// TODO: category colors are currently hardcoded hex values. Revisit using
-//  theme-aware colors (MaterialTheme.colorScheme) so this adapts properly
-//  to dark mode / Material You dynamic color later.
 @Composable
 private fun getCategoryColor(category: StorageCategory): Color {
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     return when (category) {
-        StorageCategory.IMAGE -> Color(0xFF4CAF50) // Green
-        StorageCategory.VIDEO -> Color(0xFF2196F3) // Blue
-        StorageCategory.AUDIO -> Color(0xFFFF9800) // Orange
-        StorageCategory.OTHER -> Color(0xFF9C27B0) // Purple
+        StorageCategory.IMAGE -> if (isDark) Color(0xFF81C784) else Color(0xFF2E7D32) // green
+        StorageCategory.VIDEO -> if (isDark) Color(0xFF64B5F6) else Color(0xFF1565C0) // blue
+        StorageCategory.AUDIO -> if (isDark) Color(0xFFFFB74D) else Color(0xFFE65100) // orange
+        StorageCategory.OTHER -> if (isDark) Color(0xFFBA68C8) else Color(0xFF6A1B9A) // purple
     }
 }
