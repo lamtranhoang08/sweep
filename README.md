@@ -16,8 +16,7 @@ Built with Kotlin and Jetpack Compose as a portfolio project. It is scoped to wh
   <img src="docs/screenshots/cleanup.png" width="22%" alt="Cleanup" />
 </p>
 
-<!-- Add the demo once recorded: <p align="center"><img src="docs/demo.gif" width="30%" alt="Sweep demo" /></p> -->
-
+<p align="center"><img src="docs/demo.gif" width="30%" alt="Sweep demo" /></p>
 ## Download
 
 **[Get the latest APK from GitHub Releases](https://github.com/lamtranhoang08/sweep/releases/latest)** (Android 13 or newer).
