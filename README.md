@@ -2,7 +2,12 @@
 
 A small, native Android file manager: browse folders, view media, search, and find the files eating your storage.
 
-Built with Kotlin and Jetpack Compose as a portfolio project. It's scoped to what one developer can design and finish, with the focus on getting the hard parts of Android storage right rather than on feature count.
+Built with Kotlin and Jetpack Compose as a portfolio project. It is scoped to what one developer can design and finish, with the focus on getting the hard parts of modern Android storage right rather than on feature count.
+
+[![Latest release](https://img.shields.io/github/v/release/lamtranhoang08/sweep)](https://github.com/lamtranhoang08/sweep/releases/latest)
+![Platform](https://img.shields.io/badge/platform-Android%2013%2B-3DDC84)
+![Kotlin](https://img.shields.io/badge/Kotlin-Jetpack%20Compose-7F52FF)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 <p align="center">
   <img src="docs/screenshots/gallery.png" width="22%" alt="Gallery" />
@@ -11,10 +16,22 @@ Built with Kotlin and Jetpack Compose as a portfolio project. It's scoped to wha
   <img src="docs/screenshots/cleanup.png" width="22%" alt="Cleanup" />
 </p>
 
+<!-- Add the demo once recorded: <p align="center"><img src="docs/demo.gif" width="30%" alt="Sweep demo" /></p> -->
+
+## Download
+
+**[Get the latest APK from GitHub Releases](https://github.com/lamtranhoang08/sweep/releases/latest)** (Android 13 or newer).
+
+1. Download `sweep-1.0.0.apk` on your device.
+2. Open it and allow "install from this source" when Android asks.
+3. Grant the media permissions when Sweep asks.
+
+Each release lists a SHA-256 checksum so you can verify the download. Sweep is distributed here rather than on Google Play.
+
 ## What it does
 
-- **Browse**: all device media, or any folder you pick, with subfolder navigation
-- **Gallery**: thumbnail grid and a full-screen viewer for photos and videos
+- **Browse**: all device media, or any folder you pick (remembered across restarts), with subfolder navigation
+- **Gallery**: thumbnail grid and a full-screen viewer for photos, videos and GIFs
 - **Storage**: usage by category (images, video, audio)
 - **Cleanup**: largest files and exact-duplicate detection
 - **Search**: by file name, with type filters and highlighted matches
@@ -32,6 +49,8 @@ Everything runs on the device. There is no backend and no network access.
 | Search that feels instant | The library is held in memory and each keystroke filters it (debounced) instead of re-querying. Results carry the query they were computed for, so the UI can tell "still searching" from "no matches". |
 | Empty screens that are really loading | A `LoadState` (Loading / Success / Error) on the list screens. |
 | Permission dead ends | Explains why access is needed, re-asks, and sends the user to Settings once Android stops showing its dialog. |
+| Thumbnails everywhere, cheaply | One shared Coil `ImageLoader` (with video-frame decoding) owned by the app container, so a thumbnail decoded on one tab is already cached on the next. |
+| Shipping a minified build | The release build runs R8 with resource shrinking, and was smoke-tested screen by screen on the signed release APK. Signing keys live outside the repo, and a fresh clone still builds (unsigned). |
 
 ## Architecture
 
@@ -62,9 +81,17 @@ com.example.sweep
 
 ## Tech stack
 
-Kotlin, Jetpack Compose (Material 3), Navigation Compose, Coroutines and Flow, Coil (with video frame thumbnails), MediaStore, Storage Access Framework.
+Kotlin, Jetpack Compose (Material 3), Navigation Compose, Coroutines and Flow, DataStore, Coil (with video frame thumbnails), MediaStore, Storage Access Framework.
 
-## Getting started
+## Testing
+
+Unit tests cover the ViewModels (Gallery, Search, Cleanup) against a `FakeFileRepository` with coroutine test support, plus the search matching, duplicate grouping and formatting logic.
+
+```bash
+./gradlew testDebugUnitTest
+```
+
+## Building from source
 
 Requires Android Studio and a device or emulator running Android 13 (API 33) or newer.
 
@@ -72,13 +99,26 @@ Requires Android Studio and a device or emulator running Android 13 (API 33) or 
 git clone https://github.com/lamtranhoang08/sweep.git
 ```
 
-Open the folder in Android Studio, let Gradle sync, and run. Grant the media permissions when asked. On a fresh emulator, take a photo with the Camera app so there is something to show.
+Open the folder in Android Studio, let Gradle sync, and run. On a fresh emulator, add a few photos and a short video (or push sample files with `adb`) so there is something to show.
 
-Sweep requests `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO` and `READ_MEDIA_AUDIO`, and browses other folders through the system folder picker. It does not request all-files access.
+To build a release APK:
+
+```bash
+./gradlew assembleRelease
+```
+
+Without signing properties the APK is built unsigned. To sign it, define `SWEEP_STORE_FILE`, `SWEEP_STORE_PASSWORD`, `SWEEP_KEY_ALIAS` and `SWEEP_KEY_PASSWORD` in `~/.gradle/gradle.properties`.
+
+## Permissions
+
+Sweep requests `READ_MEDIA_IMAGES`, `READ_MEDIA_VIDEO` and `READ_MEDIA_AUDIO`, and browses other folders through the system folder picker. It does not request all-files access and has no `INTERNET` permission.
 
 ## Status
 
-Core features are complete. In progress: back navigation and a remembered folder in Browse, unit tests, and release polish (icon, string resources).
+**1.0.0 is released.** Core features are complete and the signed release build has been tested end to end.
+
+**Planned for 1.0.1:**
+- Move user-facing text into string resources
 
 **Known limitations**, each tracked as a `TODO` in the code:
 - Files browsed through the folder picker can be opened but not renamed or deleted yet.
