@@ -39,6 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -65,6 +66,19 @@ private val CATEGORY_FILTERS: List<Pair<StorageCategory?, String>> = listOf(
     StorageCategory.VIDEO to "Videos",
     StorageCategory.AUDIO to "Audio"
 )
+
+/** Longest query echoed back in the "no matches" message. */
+private const val MAX_ECHOED_QUERY_LENGTH = 40
+
+private fun noMatchMessage(query: String): String {
+    val trimmed = query.trim()
+    val shown = if (trimmed.length > MAX_ECHOED_QUERY_LENGTH) {
+        trimmed.take(MAX_ECHOED_QUERY_LENGTH) + "…"
+    } else {
+        trimmed
+    }
+    return "No files match \"$shown\""
+}
 
 /**
  * Full-screen search over the indexed media library.
@@ -135,7 +149,7 @@ fun SearchScreen(
             query.isBlank() -> CenteredHint("Search by file name")
 
             results.items.isEmpty() && resultsAreCurrent ->
-                CenteredHint("No files match \"${query.trim()}\"")
+                CenteredHint(noMatchMessage(query))
 
             results.items.isEmpty() -> Unit
 
@@ -255,7 +269,9 @@ private fun CenteredHint(message: String) {
         Text(
             text = message,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
     }
 }
