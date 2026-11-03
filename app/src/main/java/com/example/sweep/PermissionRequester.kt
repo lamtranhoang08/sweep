@@ -71,7 +71,7 @@ private fun openAppSettings(context: Context) {
 }
 
 /**
- * Gate that shgows its content only once media access is granted.
+ * Gate that shows its content only once media access is granted.
  *
  * if access us already granted, [onGranted] fires immediately. Otherwise, it explains
  * why access is needed and walks the user through granting it,
