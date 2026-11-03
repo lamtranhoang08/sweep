@@ -46,6 +46,10 @@ import com.example.sweep.screens.components.FileActionsHost
  * @param onItemClick Called when a thumbnail is tapped. Defaults to a no-op for now;
  * it will navigate to the full-screen viewer once that route is set up.
  */
+// TODO: Thumbnails decode the full photo at grid size, which is slow on large
+// libraries (visible on an emulator with 1,000 photos). Load MediaStore's
+// cached thumbnails (ContentResolver.loadThumbnail) through a custom Coil
+// fetcher, and re-measure on a release build, where Compose is much faster.
 @Composable
 fun GalleryScreen(
     onItemClick: (FileItem) -> Unit = {}
