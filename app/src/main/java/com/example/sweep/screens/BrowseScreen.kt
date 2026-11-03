@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material3.Button
@@ -77,7 +78,6 @@ fun BrowseScreen(
                 it,
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
-//            viewModel.openFolder(it)
             viewModel.pickFolder(it)
         }
     }
@@ -136,7 +136,7 @@ fun BrowseScreen(
                                         imageVector = if (file.isDirectory) {
                                             Icons.Default.Folder
                                         } else {
-                                            Icons.Default.InsertDriveFile
+                                            Icons.AutoMirrored.Filled.InsertDriveFile
                                         },
                                         contentDescription = null,
                                         tint = if (file.isDirectory) {
